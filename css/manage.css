@@ -1,0 +1,554 @@
+.crm-powermap-manage-form {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.crm-powermap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.crm-powermap-title h1 {
+  margin: 0 0 5px 0;
+  color: #2c5aa0;
+}
+
+.crm-powermap-breadcrumb {
+  font-size: 14px;
+  color: #666;
+}
+
+.crm-powermap-breadcrumb a {
+  color: #2c5aa0;
+  text-decoration: none;
+}
+
+.crm-powermap-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.crm-powermap-form-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.crm-powermap-form-container fieldset {
+  margin: 0;
+  padding: 30px;
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.crm-powermap-form-container fieldset:last-of-type {
+  border-bottom: none;
+}
+
+.crm-powermap-form-container legend {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c5aa0;
+  margin-bottom: 20px;
+  padding: 0;
+  border: none;
+  width: auto;
+}
+
+.crm-powermap-selection-tabs {
+  margin-bottom: 20px;
+}
+
+.crm-tabs-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.crm-tab {
+  margin-right: 1px;
+}
+
+.crm-tab a {
+  display: block;
+  padding: 12px 20px;
+  background: #f8f9fa;
+  color: #666;
+  text-decoration: none;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #ddd;
+  border-bottom: none;
+}
+
+.crm-tab.active a {
+  background: white;
+  color: #2c5aa0;
+  font-weight: 600;
+}
+
+.crm-powermap-tab-content {
+  display: none;
+  padding: 20px 0;
+}
+
+.crm-powermap-tab-content.active {
+  display: block;
+}
+
+.crm-powermap-quick-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stakeholder-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stakeholder-filter:hover {
+  background: #e9ecef;
+  border-color: #2c5aa0;
+}
+
+.stakeholder-filter.active {
+  background: #2c5aa0;
+  color: white;
+  border-color: #2c5aa0;
+}
+
+.assessment-defaults {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.default-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.radio-option {
+  display: block;
+  margin-bottom: 15px;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.radio-option:hover {
+  border-color: #2c5aa0;
+  background: #f8f9fa;
+}
+
+.radio-option input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #2c5aa0;
+}
+
+.option-description {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.display-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.display-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.color-picker label {
+  min-width: 120px;
+}
+
+.visibility-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.permission-options label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* List View Styles */
+.crm-powermap-list-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.crm-powermap-list-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-section input,
+.filter-section select {
+  min-width: 150px;
+}
+
+.view-options {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.view-btn {
+  padding: 8px 12px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-btn.active,
+.view-btn:hover {
+  background: #2c5aa0;
+  color: white;
+}
+
+.crm-powermap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.crm-powermap-grid.list-view {
+  grid-template-columns: 1fr;
+}
+
+.crm-powermap-grid.list-view .powermap-card {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+}
+
+.crm-powermap-grid.list-view .card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.powermap-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.powermap-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 15px 20px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.card-title h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.card-title a {
+  color: #2c5aa0;
+  text-decoration: none;
+}
+
+.card-title a:hover {
+  text-decoration: underline;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.campaign-tag {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 150px;
+  z-index: 1000;
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 5px 0;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu li {
+  margin: 0;
+}
+
+.dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+  background: #f8f9fa;
+}
+
+.dropdown-menu .divider {
+  height: 1px;
+  background: #dee2e6;
+  margin: 5px 0;
+}
+
+.card-body {
+  padding: 15px 20px;
+}
+
+.map-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 15px;
+}
+
+.map-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c5aa0;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.stat-label.champions { color: #28a745; }
+.stat-label.targets { color: #dc3545; }
+
+.map-preview {
+  height: 60px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mini-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #f1f1f1;
+  font-size: 12px;
+}
+
+.owner-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+}
+
+.status-indicator {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-indicator.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-indicator.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.crm-powermap-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  grid-column: 1 / -1;
+}
+
+.empty-icon {
+  font-size: 64px;
+  color: #dee2e6;
+  margin-bottom: 20px;
+}
+
+.empty-icon i {
+  display: block;
+}
+
+.crm-powermap-empty-state h3 {
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.crm-powermap-empty-state p {
+  color: #999;
+  max-width: 400px;
+  margin: 0 auto 30px auto;
+  line-height: 1.5;
+}
+
+.crm-powermap-pagination {
+  padding: 20px;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .crm-powermap-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .crm-powermap-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .crm-powermap-list-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-options {
+    justify-content: center;
+  }
+
+  .crm-powermap-grid {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+
+  .assessment-defaults,
+  .map-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .display-checkboxes {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

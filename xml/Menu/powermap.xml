@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/powermap/dashbaord</path>
+    <page_callback>CRM_Powermap_Page_Dashboard</page_callback>
+    <title>Dashboard</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/powermap/manage</path>
+    <page_callback>CRM_Powermap_Form_Manage</page_callback>
+    <title>Manage</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+</menu>

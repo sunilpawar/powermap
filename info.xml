@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<extension key="com.skvare.powermap" type="module">
+  <file>powermap</file>
+  <name>Power Mapping</name>
+  <description>Strategic stakeholder visualization and management tool for advocacy, campaigns, and organizational strategy.</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>FIXME</author>
+    <email>FIXME</email>
+  </maintainer>
+  <urls>
+    <url desc="Main Extension Page">http://FIXME</url>
+    <url desc="Documentation">http://FIXME</url>
+    <url desc="Support">http://FIXME</url>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
+  </urls>
+  <releaseDate>2025-08-06</releaseDate>
+  <version>1.0</version>
+  <develStage>alpha</develStage>
+  <compatibility>
+    <ver>6.6</ver>
+  </compatibility>
+  <comments>Strategic stakeholder power mapping extension for CiviCRM</comments>
+  <classloader>
+    <psr0 prefix="CRM_" path="."/>
+    <psr4 prefix="Civi\" path="Civi"/>
+  </classloader>
+  <civix>
+    <namespace>CRM/Powermap</namespace>
+    <format>23.02.1</format>
+    <angularModule>crmPowermap</angularModule>
+  </civix>
+  <mixins>
+    <mixin>mgd-php@1.0.0</mixin>
+    <mixin>setting-php@1.0.0</mixin>
+    <mixin>smarty-v2@1.0.1</mixin>
+    <mixin>menu-xml@1.0.0</mixin>
+  </mixins>
+  <upgrader>CRM_Powermap_Upgrader</upgrader>
+</extension>
