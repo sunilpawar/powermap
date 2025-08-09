@@ -324,7 +324,7 @@ class CRM_Powermap_Utils_Assessment {
   /**
    * Get custom field information
    */
-  private static function getCustomFieldInfo() {
+  public static function getCustomFieldInfo() {
     static $cache = NULL;
 
     if ($cache !== NULL) {
