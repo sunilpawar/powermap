@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Powermap</base>
+  <class>PowermapAssessmentHistory</class>
+  <name>civicrm_powermap_assessment_history</name>
+  <comment>Power Mapping Assessment History</comment>
+  <log>true</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique Assessment History ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>contact_id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>FK to Contact ID</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Contact</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>contact_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>powermap_id</name>
+    <type>int unsigned</type>
+    <comment>FK to PowerMap Config (optional)</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Power Map</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>powermap_id</name>
+    <table>civicrm_powermap_config</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>influence_level</name>
+    <type>varchar</type>
+    <length>32</length>
+    <comment>Historical influence level</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapAssessmentHistory::getInfluenceLevelOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Influence Level</label>
+    </html>
+  </field>
+
+  <field>
+    <name>support_level</name>
+    <type>varchar</type>
+    <length>32</length>
+    <comment>Historical support level</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapAssessmentHistory::getSupportLevelOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Support Level</label>
+    </html>
+  </field>
+
+  <field>
+    <name>engagement_priority</name>
+    <type>varchar</type>
+    <length>32</length>
+    <comment>Historical engagement priority</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapAssessmentHistory::getEngagementPriorityOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Engagement Priority</label>
+    </html>
+  </field>
+
+  <field>
+    <name>stakeholder_type</name>
+    <type>text</type>
+    <comment>Historical stakeholder types</comment>
+    <html>
+      <type>TextArea</type>
+      <rows>2</rows>
+      <cols>60</cols>
+      <label>Stakeholder Type</label>
+    </html>
+  </field>
+
+  <field>
+    <name>assessment_notes</name>
+    <type>text</type>
+    <comment>Historical assessment notes</comment>
+    <html>
+      <type>RichTextEditor</type>
+      <rows>4</rows>
+      <cols>60</cols>
+      <label>Assessment Notes</label>
+    </html>
+  </field>
+
+  <field>
+    <name>assessed_date</name>
+    <type>datetime</type>
+    <required>true</required>
+    <comment>Date of this assessment</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Assessed Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>assessed_by</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID who made assessment</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Assessed By</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>assessed_by</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>change_reason</name>
+    <type>text</type>
+    <comment>Reason for assessment change</comment>
+    <html>
+      <type>TextArea</type>
+      <rows>3</rows>
+      <cols>60</cols>
+      <label>Change Reason</label>
+    </html>
+  </field>
+
+  <index>
+    <name>index_contact_id</name>
+    <fieldName>contact_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_powermap_id</name>
+    <fieldName>powermap_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_assessed_by</name>
+    <fieldName>assessed_by</fieldName>
+  </index>
+
+  <index>
+    <name>index_assessed_date</name>
+    <fieldName>assessed_date</fieldName>
+  </index>
+
+  <index>
+    <name>index_influence_level</name>
+    <fieldName>influence_level</fieldName>
+  </index>
+
+  <index>
+    <name>index_support_level</name>
+    <fieldName>support_level</fieldName>
+  </index>
+
+  <index>
+    <name>index_engagement_priority</name>
+    <fieldName>engagement_priority</fieldName>
+  </index>
+
+</table>

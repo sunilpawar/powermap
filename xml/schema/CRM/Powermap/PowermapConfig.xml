@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Powermap</base>
+  <class>PowermapConfig</class>
+  <name>civicrm_powermap_config</name>
+  <comment>Power Map Configuration Table</comment>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique PowerMap Config ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>name</name>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <comment>Power Map Name</comment>
+    <html>
+      <type>Text</type>
+      <label>Power Map Name</label>
+    </html>
+  </field>
+
+  <field>
+    <name>description</name>
+    <type>text</type>
+    <comment>Power Map Description</comment>
+    <html>
+      <type>TextArea</type>
+      <rows>4</rows>
+      <cols>60</cols>
+      <label>Description</label>
+    </html>
+  </field>
+
+  <field>
+    <name>campaign_id</name>
+    <type>int unsigned</type>
+    <comment>Associated Campaign ID</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Campaign</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>campaign_id</name>
+    <table>civicrm_campaign</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>created_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID of creator</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Created By</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>created_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>created_date</name>
+    <type>datetime</type>
+    <comment>Date and time power map was created</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Created Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>modified_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID of last modifier</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Modified By</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>modified_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>modified_date</name>
+    <type>datetime</type>
+    <comment>Date and time power map was last modified</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Modified Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>is_active</name>
+    <type>boolean</type>
+    <default>1</default>
+    <required>true</required>
+    <comment>Is this power map active?</comment>
+    <html>
+      <type>CheckBox</type>
+      <label>Enabled</label>
+    </html>
+  </field>
+
+  <field>
+    <name>is_reserved</name>
+    <type>boolean</type>
+    <default>0</default>
+    <required>true</required>
+    <comment>Is this power map reserved?</comment>
+    <html>
+      <type>CheckBox</type>
+      <label>Reserved</label>
+    </html>
+  </field>
+
+  <field>
+    <name>visibility</name>
+    <type>varchar</type>
+    <length>32</length>
+    <default>'public'</default>
+    <comment>Visibility setting (public, private, group)</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapConfig::getVisibilityOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Visibility</label>
+    </html>
+  </field>
+
+  <field>
+    <name>settings</name>
+    <type>text</type>
+    <comment>JSON encoded settings for this power map</comment>
+    <serialize>JSON</serialize>
+    <html>
+      <type>TextArea</type>
+      <rows>4</rows>
+      <cols>60</cols>
+      <label>Settings</label>
+    </html>
+  </field>
+
+  <index>
+    <name>UI_name</name>
+    <fieldName>name</fieldName>
+    <unique>true</unique>
+  </index>
+
+  <index>
+    <name>index_campaign_id</name>
+    <fieldName>campaign_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_created_id</name>
+    <fieldName>created_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_is_active</name>
+    <fieldName>is_active</fieldName>
+  </index>
+
+  <index>
+    <name>index_visibility</name>
+    <fieldName>visibility</fieldName>
+  </index>
+
+  <index>
+    <name>index_created_date</name>
+    <fieldName>created_date</fieldName>
+  </index>
+
+</table>

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Powermap</base>
+  <class>PowermapAuditLog</class>
+  <name>civicrm_powermap_audit_log</name>
+  <comment>Power Mapping Audit Log</comment>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique Audit Log ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>entity_table</name>
+    <type>varchar</type>
+    <length>64</length>
+    <required>true</required>
+    <comment>Table name of the entity</comment>
+    <html>
+      <type>Text</type>
+      <label>Entity Table</label>
+    </html>
+  </field>
+
+  <field>
+    <name>entity_id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>ID of the entity</comment>
+    <html>
+      <type>Number</type>
+      <label>Entity ID</label>
+    </html>
+  </field>
+
+  <field>
+    <name>contact_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID who performed action</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Contact</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>contact_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>action</name>
+    <type>varchar</type>
+    <length>32</length>
+    <required>true</required>
+    <comment>Action performed (create, update, delete, view)</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapAuditLog::getActionOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Action</label>
+    </html>
+  </field>
+
+  <field>
+    <name>old_values</name>
+    <type>text</type>
+    <comment>JSON encoded old values</comment>
+    <serialize>JSON</serialize>
+    <html>
+      <type>TextArea</type>
+      <rows>4</rows>
+      <cols>60</cols>
+      <label>Old Values</label>
+    </html>
+  </field>
+
+  <field>
+    <name>new_values</name>
+    <type>text</type>
+    <comment>JSON encoded new values</comment>
+    <serialize>JSON</serialize>
+    <html>
+      <type>TextArea</type>
+      <rows>4</rows>
+      <cols>60</cols>
+      <label>New Values</label>
+    </html>
+  </field>
+
+  <field>
+    <name>log_date</name>
+    <type>datetime</type>
+    <required>true</required>
+    <comment>Date and time of action</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Log Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>ip_address</name>
+    <type>varchar</type>
+    <length>45</length>
+    <comment>IP address of user</comment>
+    <html>
+      <type>Text</type>
+      <label>IP Address</label>
+    </html>
+  </field>
+
+  <field>
+    <name>user_agent</name>
+    <type>text</type>
+    <comment>User agent string</comment>
+    <html>
+      <type>TextArea</type>
+      <rows>2</rows>
+      <cols>60</cols>
+      <label>User Agent</label>
+    </html>
+  </field>
+
+  <index>
+    <name>index_contact_id</name>
+    <fieldName>contact_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_entity</name>
+    <fieldName>entity_table</fieldName>
+    <fieldName>entity_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_log_date</name>
+    <fieldName>log_date</fieldName>
+  </index>
+
+  <index>
+    <name>index_action</name>
+    <fieldName>action</fieldName>
+  </index>
+
+  <index>
+    <name>index_entity_table</name>
+    <fieldName>entity_table</fieldName>
+  </index>
+
+  <index>
+    <name>index_entity_id</name>
+    <fieldName>entity_id</fieldName>
+  </index>
+
+</table>

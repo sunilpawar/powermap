@@ -15,9 +15,19 @@ class CRM_Powermap_Upgrader extends CRM_Extension_Upgrader_Base {
    *
    * Note that if a file is present sql\auto_install that will run regardless of this hook.
    */
-  // public function install(): void {
-  //   $this->executeSqlFile('sql/my_install.sql');
-  // }
+  public function install(): void {
+    // Create custom fields for power mapping
+    self::createCustomFields();
+
+    // Create activity type for power mapping assessments
+    self::createActivity();
+
+    // Set default settings
+    $this->setDefaultSettings();
+
+    // Log successful installation
+    CRM_Core_Error::debug_log_message('Power Mapping extension installed successfully.');
+  }
 
 
   /**
@@ -161,6 +171,48 @@ class CRM_Powermap_Upgrader extends CRM_Extension_Upgrader_Base {
       'help_post' => 'Notes and reasoning for influence/support assessments',
       'attributes' => 'rows=4 cols=60',
     ]);
+
+
+    // relationship Strength Field
+    civicrm_api3('CustomField', 'create', [
+      'custom_group_id' => $customGroupId,
+      'name' => 'relationship_strength',
+      'label' => 'Relationship Strength',
+      'data_type' => 'String',
+      'html_type' => 'Select',
+      'is_required' => 0,
+      'is_searchable' => 1,
+      'is_active' => 1,
+      'help_post' => 'Strength of relationship with this stakeholder',
+      'option_group_id' => self::createOptionGroup('relationship_strength', [
+        'strong' => 'Strong',
+        'moderate' => 'Moderate',
+        'weak' => 'Weak',
+        'none' => 'No Relationship'
+      ]),
+    ]);
+
+    // Communication Preference Field
+    civicrm_api3('CustomField', 'create', [
+      'custom_group_id' => $customGroupId,
+      'name' => 'communication_preference',
+      'label' => 'Communication Preference  ',
+      'data_type' => 'String',
+      'html_type' => 'Select',
+      'is_required' => 0,
+      'is_searchable' => 1,
+      'is_active' => 1,
+      'help_post' => 'Preferred communication methods',
+      'option_group_id' => self::createOptionGroup('communication_preference', [
+        'email' => 'Email',
+        'phone' => 'Phone',
+        'in_person' => 'In Person',
+        'social_media' => 'Social Media',
+        'formal_letter' => 'Formal Letter'
+      ]),
+    ]);
+
+
   }
 
   /**
@@ -187,6 +239,72 @@ class CRM_Powermap_Upgrader extends CRM_Extension_Upgrader_Base {
     }
 
     return $optionGroup['id'];
+  }
+
+
+  private static function createActivity() {
+    try {
+      // Check if activity type exists
+      $existing = civicrm_api3('OptionValue', 'get', [
+        'option_group_id' => 'activity_type',
+        'name' => 'power_mapping_assessment',
+      ]);
+
+      if ($existing['count'] == 0) {
+        // Create the activity type
+        civicrm_api3('OptionValue', 'create', [
+          'option_group_id' => 'activity_type',
+          'name' => 'power_mapping_assessment',
+          'label' => 'Power Mapping Assessment',
+          'description' => 'Stakeholder assessment for power mapping',
+          'is_active' => 1,
+          'is_reserved' => 0,
+        ]);
+
+        // Set as default activity type for power mapping
+        Civi::settings()->set('powermap_activity_type_id', 'power_mapping_assessment');
+      }
+
+    }
+    catch (Exception $e) {
+      CRM_Core_Error::debug_log_message('Upgrade 1300 failed: ' . $e->getMessage());
+      return FALSE;
+    }
+  }
+  /**
+   * Set default settings
+   */
+  private function setDefaultSettings() {
+    $defaultSettings = [
+      'powermap_enable_notifications' => 0,
+      'powermap_default_reminder_frequency' => 'quarterly',
+      'powermap_default_color_scheme' => 'default',
+      'powermap_enable_animations' => 1,
+      'powermap_show_tooltips' => 1,
+      'powermap_enable_drag_drop' => 1,
+      'powermap_assessment_retention_days' => 365,
+      'powermap_auto_archive_inactive' => 0,
+      'powermap_inactive_threshold_days' => 90,
+      'powermap_allow_csv_export' => 1,
+      'powermap_allow_json_export' => 1,
+      'powermap_allow_pdf_export' => 0,
+      'powermap_include_contact_details' => 0,
+      'powermap_sync_with_activities' => 0,
+      'powermap_sync_with_relationships' => 0,
+      'powermap_default_map_visibility' => 'public',
+      'powermap_require_approval' => 0,
+      'powermap_max_stakeholders_per_map' => 500,
+      'powermap_enable_version_control' => 0,
+      'powermap_enable_audit_log' => 0,
+      'powermap_enable_api_access' => 0,
+      'powermap_api_rate_limit' => 1000,
+    ];
+
+    foreach ($defaultSettings as $setting => $value) {
+      if (Civi::settings()->get($setting) === NULL) {
+        Civi::settings()->set($setting, $value);
+      }
+    }
   }
 
   /**

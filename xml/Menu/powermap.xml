@@ -1,15 +1,21 @@
 <?xml version="1.0"?>
 <menu>
   <item>
-    <path>civicrm/powermap/dashbaord</path>
+    <path>civicrm/powermap/dashboard</path>
     <page_callback>CRM_Powermap_Page_Dashboard</page_callback>
-    <title>Dashboard</title>
-    <access_arguments>access CiviCRM</access_arguments>
+    <title>Power Mapping Dashboard</title>
+    <access_arguments>access power mapping</access_arguments>
   </item>
   <item>
     <path>civicrm/powermap/manage</path>
     <page_callback>CRM_Powermap_Form_Manage</page_callback>
-    <title>Manage</title>
-    <access_arguments>access CiviCRM</access_arguments>
+    <title>Manage Power Maps</title>
+    <access_arguments>edit power mapping</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/powermap/settings</path>
+    <page_callback>CRM_Powermap_Form_Settings</page_callback>
+    <title>Power Mapping Settings</title>
+    <access_arguments>administer power mapping</access_arguments>
   </item>
 </menu>

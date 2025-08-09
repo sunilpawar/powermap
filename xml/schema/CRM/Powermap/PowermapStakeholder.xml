@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Powermap</base>
+  <class>PowermapStakeholder</class>
+  <name>civicrm_powermap_stakeholder</name>
+  <comment>Power Map Stakeholder Assignments</comment>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique PowerMap Stakeholder ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>powermap_id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>FK to PowerMap Config</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Power Map</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>powermap_id</name>
+    <table>civicrm_powermap_config</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>contact_id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>FK to Contact ID</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Contact</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>contact_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>added_date</name>
+    <type>datetime</type>
+    <comment>Date stakeholder was added to power map</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Added Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>added_by</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID who added stakeholder</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Added By</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>added_by</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>is_active</name>
+    <type>boolean</type>
+    <default>1</default>
+    <required>true</required>
+    <comment>Is this stakeholder assignment active?</comment>
+    <html>
+      <type>CheckBox</type>
+      <label>Active</label>
+    </html>
+  </field>
+
+  <field>
+    <name>position_x</name>
+    <type>decimal</type>
+    <precision>10</precision>
+    <scale>4</scale>
+    <comment>X coordinate for manual positioning</comment>
+    <html>
+      <type>Text</type>
+      <label>Position X</label>
+    </html>
+  </field>
+
+  <field>
+    <name>position_y</name>
+    <type>decimal</type>
+    <precision>10</precision>
+    <scale>4</scale>
+    <comment>Y coordinate for manual positioning</comment>
+    <html>
+      <type>Text</type>
+      <label>Position Y</label>
+    </html>
+  </field>
+
+  <field>
+    <name>notes</name>
+    <type>text</type>
+    <comment>Additional notes about this stakeholder assignment</comment>
+    <html>
+      <type>TextArea</type>
+      <rows>3</rows>
+      <cols>60</cols>
+      <label>Notes</label>
+    </html>
+  </field>
+
+  <index>
+    <name>UI_powermap_stakeholder</name>
+    <fieldName>powermap_id</fieldName>
+    <fieldName>contact_id</fieldName>
+    <unique>true</unique>
+  </index>
+
+  <index>
+    <name>index_powermap_id</name>
+    <fieldName>powermap_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_contact_id</name>
+    <fieldName>contact_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_added_by</name>
+    <fieldName>added_by</fieldName>
+  </index>
+
+  <index>
+    <name>index_is_active</name>
+    <fieldName>is_active</fieldName>
+  </index>
+
+  <index>
+    <name>index_added_date</name>
+    <fieldName>added_date</fieldName>
+  </index>
+
+</table>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Powermap</base>
+  <class>PowermapAccess</class>
+  <name>civicrm_powermap_access</name>
+  <comment>Power Map Access Control</comment>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique PowerMap Access ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>powermap_id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>FK to PowerMap Config</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Power Map</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>powermap_id</name>
+    <table>civicrm_powermap_config</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>contact_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID for individual access</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Contact</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>contact_id</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>group_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Group ID for group access</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Group</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>group_id</name>
+    <table>civicrm_group</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>permission_level</name>
+    <type>varchar</type>
+    <length>32</length>
+    <required>true</required>
+    <default>'view'</default>
+    <comment>Permission level (view, edit, admin)</comment>
+    <pseudoconstant>
+      <callback>CRM_Powermap_BAO_PowermapAccess::getPermissionLevelOptions</callback>
+    </pseudoconstant>
+    <html>
+      <type>Select</type>
+      <label>Permission Level</label>
+    </html>
+  </field>
+
+  <field>
+    <name>granted_date</name>
+    <type>datetime</type>
+    <comment>Date access was granted</comment>
+    <html>
+      <type>Select Date</type>
+      <formatType>activityDateTime</formatType>
+      <label>Granted Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>granted_by</name>
+    <type>int unsigned</type>
+    <comment>FK to Contact ID who granted access</comment>
+    <html>
+      <type>EntityRef</type>
+      <label>Granted By</label>
+    </html>
+  </field>
+  <foreignKey>
+    <name>granted_by</name>
+    <table>civicrm_contact</table>
+    <key>id</key>
+    <onDelete>SET NULL</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>is_active</name>
+    <type>boolean</type>
+    <default>1</default>
+    <required>true</required>
+    <comment>Is this access grant active?</comment>
+    <html>
+      <type>CheckBox</type>
+      <label>Active</label>
+    </html>
+  </field>
+
+  <index>
+    <name>index_powermap_id</name>
+    <fieldName>powermap_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_contact_id</name>
+    <fieldName>contact_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_group_id</name>
+    <fieldName>group_id</fieldName>
+  </index>
+
+  <index>
+    <name>index_granted_by</name>
+    <fieldName>granted_by</fieldName>
+  </index>
+
+  <index>
+    <name>index_permission_level</name>
+    <fieldName>permission_level</fieldName>
+  </index>
+
+  <index>
+    <name>index_is_active</name>
+    <fieldName>is_active</fieldName>
+  </index>
+
+  <index>
+    <name>index_granted_date</name>
+    <fieldName>granted_date</fieldName>
+  </index>
+
+</table>
