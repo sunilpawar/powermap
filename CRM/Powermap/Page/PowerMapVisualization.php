@@ -28,7 +28,8 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
 
     // Get contact data for initial load
     $contacts = $this->getContactsWithRelationships();
-    //echo '<pre>'; print_r($contacts); echo '</pre>';exit;
+    // echo json_encode($contacts); exit;
+    // echo '<pre>'; print_r($contacts); echo '</pre>';exit;
     $this->assign('contactsJson', json_encode($contacts));
 
     parent::run();
@@ -41,11 +42,37 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
     $contacts = [];
     $relationships = [];
 
+    // Get relationships
+    $contactIds = ['5770', '5771', '5772', '2864', '2863'];
+    $relationshipResult = civicrm_api3('Relationship', 'get', [
+      'sequential' => 1,
+      'is_active' => 1,
+      'options' => ['limit' => 0],
+      'contact_id_a' => ['IN' => $contactIds],
+      'contact_id_b' => ['IN' => $contactIds],
+      'return' => ['id', 'contact_id_a', 'contact_id_b', 'relationship_type_id'],
+    ]);
+    //echo '<pre>'; print_r($relationshipResult); echo '</pre>';exit;
+    $relationshipContacts= [];
+    foreach ($relationshipResult['values'] as $relationship) {
+      if ($relationship['contact_id_a'] == $relationship['contact_id_b']) {
+        continue; // Skip self-relationships
+      }
+      $relationshipContacts[$relationship['contact_id_a']] = $relationship['contact_id_a'];
+      $relationshipContacts[$relationship['contact_id_b']] = $relationship['contact_id_b'];
+      $relationships[] = [
+        'source' => $relationship['contact_id_a'],
+        'target' => $relationship['contact_id_b'],
+        'type' => $this->getRelationshipTypeName($relationship['relationship_type_id']),
+      ];
+    }
+
     // Get all contacts
     $contactResult = civicrm_api3('Contact', 'get', [
       'sequential' => 1,
       'is_deleted' => 0,
-      'options' => ['limit' => 100],
+      'options' => ['limit' => 1000],
+      'id' => ['IN' => $relationshipContacts],
       'return' => ['id', 'display_name', 'contact_type', 'contact_sub_type'],
     ]);
 
@@ -56,23 +83,6 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
         'type' => $contact['contact_type'],
         'influence' => $this->getInfluenceLevel($contact['id']),
         'support' => $this->getSupportLevel($contact['id']),
-      ];
-    }
-
-    // Get relationships
-    $relationshipResult = civicrm_api3('Relationship', 'get', [
-      'sequential' => 1,
-      'is_active' => 1,
-      'options' => ['limit' => 0],
-      'return' => ['id', 'contact_id_a', 'contact_id_b', 'relationship_type_id'],
-    ]);
-
-    foreach ($relationshipResult['values'] as $relationship) {
-      $relationships[] = [
-        'id' => $relationship['id'],
-        'source' => $relationship['contact_id_a'],
-        'target' => $relationship['contact_id_b'],
-        'type' => $this->getRelationshipTypeName($relationship['relationship_type_id']),
       ];
     }
 
