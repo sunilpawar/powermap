@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/powermap</path>
+    <title>PowerMap Visualization</title>
+    <page_callback>CRM_Powermap_Page_PowerMapVisualization</page_callback>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/powermap/add</path>
+    <title>Add Stakeholder</title>
+    <page_callback>CRM_Powermap_Form_AddStakeholder</page_callback>
+    <access_arguments>edit powermap</access_arguments>
+  </item>
+</menu>

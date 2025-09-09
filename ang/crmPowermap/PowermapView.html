@@ -1,0 +1,55 @@
+<div class="powermap-angular-container">
+  <div ng-show="loading" class="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+
+  <div ng-hide="loading" class="powermap-content">
+    <!-- Header Controls -->
+    <div class="powermap-header">
+      <h1>PowerMap - Network Visualization</h1>
+      <div class="header-controls">
+        <input type="text" ng-model="filters.searchTerm" ng-change="applyFilters()"
+               placeholder="Search stakeholders..." class="search-input">
+        <button ng-click="exportCSV()" class="btn btn-primary">Export CSV</button>
+      </div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-dashboard">
+      <div class="stat-item">
+        <span class="stat-number">{{data.stats.total}}</span>
+        <span class="stat-label">Total Stakeholders</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{data.stats.high_influence}}</span>
+        <span class="stat-label">High Influence</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{data.stats.supporters}}</span>
+        <span class="stat-label">Supporters</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{data.stats.opposition}}</span>
+        <span class="stat-label">Opposition</span>
+      </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="filters-panel">
+      <div class="filter-group">
+        <label>Minimum Influence: {{filters.influenceMin}}</label>
+        <input type="range" min="1" max="5" ng-model="filters.influenceMin"
+               ng-change="applyFilters()" class="filter-slider">
+      </div>
+
+      <div class="filter-group">
+        <label>Minimum Support: {{filters.supportMin}}</label>
+        <input type="range" min="1" max="5" ng-model="filters.supportMin"
+               ng-change="applyFilters()" class="filter-slider">
+      </div>
+    </div>
+
+    <!-- Visualization -->
+    <powermap-visualization data="data" filters="filters"></powermap-visualization>
+  </div>
+</div>
