@@ -585,7 +585,7 @@ class PowerMapController {
   loadData() {
     // In a real implementation, this would fetch from CiviCRM API
     // For now, use the data passed from PHP
-    if (false && typeof window.powermapData !== 'undefined') {
+    if (typeof window.powermapData !== 'undefined') {
       this.initializeVisualization(window.powermapData);
     } else {
       // Fallback to demo data
@@ -615,10 +615,44 @@ class PowerMapController {
   }
 
   initializeVisualization(data) {
-    this.visualization = new PowerMapVisualization('powermap-container', data);
+    // Clean the data first
+    const cleanedData = this.cleanData(data);
+    this.visualization = new PowerMapVisualization('powermap-container', cleanedData);
 
     // Initialize relationship type checkboxes
-    this.initializeRelationshipTypes(data.links);
+    this.initializeRelationshipTypes(cleanedData.links);
+  }
+
+  cleanData(data) {
+    // Clean nodes - ensure all have proper names
+    const cleanedNodes = data.nodes.map(node => ({
+      ...node,
+      name: node.name && node.name.trim() !== '' ? node.name : `Contact ${node.id}`,
+      influence: node.influence || 1,
+      support: node.support || 1,
+      type: node.type || 'Individual'
+    }));
+
+    // Clean links - remove self-references and ensure valid source/target
+    const nodeIds = new Set(cleanedNodes.map(n => String(n.id)));
+    const cleanedLinks = data.links.filter(link => {
+      const sourceId = String(link.source);
+      const targetId = String(link.target);
+
+      // Remove self-loops and invalid references
+      return sourceId !== targetId &&
+          nodeIds.has(sourceId) &&
+          nodeIds.has(targetId);
+    }).map(link => ({
+      ...link,
+      type: link.type || 'Related to',
+      strength: link.strength || 1
+    }));
+
+    return {
+      nodes: cleanedNodes,
+      links: cleanedLinks
+    };
   }
 
   initializeRelationshipTypes(links) {
