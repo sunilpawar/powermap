@@ -2,9 +2,7 @@ class PowerMapVisualization {
   constructor(containerId, data) {
     this.containerId = containerId;
     this.originalData = data;
-    this.filteredData = {
-      ...data
-    };
+    this.filteredData = { ...data };
     this.width = 800;
     this.height = 600;
     this.simulation = null;
@@ -33,7 +31,7 @@ class PowerMapVisualization {
 
   setupSVG() {
     const container = d3.select(`#${this.containerId}`);
-    container.selectAll("*").remove(); // Clear any existing content
+    container.selectAll("*").remove();
 
     this.width = container.node().getBoundingClientRect().width || 800;
     this.height = container.node().getBoundingClientRect().height || 600;
@@ -89,7 +87,10 @@ class PowerMapVisualization {
 
   setupSimulation() {
     this.simulation = d3.forceSimulation()
-      .force('link', d3.forceLink().id(d => d.id).distance(80).strength(0.1))
+      .force('link', d3.forceLink()
+        .id(d => d.id)
+        .distance(80)
+        .strength(0.1))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
       .force('collision', d3.forceCollide().radius(d => this.getNodeRadius(d) + 5));
@@ -107,7 +108,15 @@ class PowerMapVisualization {
   }
 
   setupKeyboardShortcuts() {
-    d3.select('body').on('keydown', (event) => {
+    d3.select('body').on('keydown', () => {
+      const event = d3.event;
+      if (!event) {
+        console.error('No event object available for keydown');
+        return;
+      }
+      if (event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA')) {
+        return;
+      }
       if (event.ctrlKey || event.metaKey) {
         switch (event.key) {
           case '=':
@@ -149,45 +158,25 @@ class PowerMapVisualization {
       type: node.type || 'Individual'
     }));
 
-    // Fix link references and ensure they point to actual nodes
+    // Fix link references to use node IDs
     const nodeIds = new Set(this.filteredData.nodes.map(n => n.id));
     this.filteredData.links = this.filteredData.links
       .filter(link => {
-        const sourceId = String(link.source.id || link.source);
-        const targetId = String(link.target.id || link.target);
-        return nodeIds.has(sourceId) && nodeIds.has(targetId) && sourceId !== targetId;
+        const sourceId = String(link.source?.id || link.source);
+        const targetId = String(link.target?.id || link.target);
+        if (!nodeIds.has(sourceId) || !nodeIds.has(targetId) || sourceId === targetId) {
+          console.warn(`Invalid link filtered out: source=${sourceId}, target=${targetId}`);
+          return false;
+        }
+        return true;
       })
       .map(link => ({
         ...link,
-        source: String(link.source.id || link.source),
-        target: String(link.target.id || link.target),
+        source: String(link.source?.id || link.source),
+        target: String(link.target?.id || link.target),
         type: link.type || 'Related to',
         strength: parseInt(link.strength) || 1
       }));
-  }
-
-  renderLinks2() {
-    const links = this.linksGroup
-      .selectAll('.link')
-      .data(this.filteredData.links, d => `${d.source}-${d.target}`);
-
-    links.exit().remove();
-
-    const linksEnter = links.enter()
-      .append('line')
-      .attr('class', 'link')
-      .attr('stroke', '#F54927')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', d => this.getLinkWidth(d))
-      .attr('marker-end', 'url(#arrowhead)')
-      .style('cursor', 'pointer');
-
-    // Add hover effects for links
-    linksEnter
-      .on('mouseover', (event, d) => this.showLinkTooltip(event, d))
-      .on('mouseout', () => this.hideTooltip());
-
-    this.links = linksEnter.merge(links);
   }
 
   renderLinks() {
@@ -200,7 +189,7 @@ class PowerMapVisualization {
     const linksEnter = links.enter()
       .append('line')
       .attr('class', 'link')
-      .attr('stroke', '#FFA500')
+      .attr('stroke', d => this.colorScale(d)(d.strength)) // Use colorScale for dynamic color
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', d => this.getLinkWidth(d))
       .attr('marker-end', 'url(#arrowhead)')
@@ -232,7 +221,6 @@ class PowerMapVisualization {
     this.linkLabels = labelsEnter.merge(linkLabels);
   }
 
-
   renderNodes() {
     const nodes = this.nodesGroup
       .selectAll('.node')
@@ -248,9 +236,10 @@ class PowerMapVisualization {
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
-      .call(this.getDragHandler());
+      .call(this.getDragHandler())
+      .attr('aria-label', d => `Node: ${d.name}, Influence: ${d.influence}/5, Support: ${d.support}/5`);
 
-    // Add hover and click events
+    // Add hover and click events with vibration effect
     nodesEnter
       .on('mouseover', (event, d) => this.showNodeTooltip(event, d))
       .on('mouseout', () => this.hideTooltip())
@@ -280,10 +269,12 @@ class PowerMapVisualization {
   }
 
   updateSimulation() {
+    // Ensure nodes are objects with proper IDs
     this.simulation
       .nodes(this.filteredData.nodes)
       .on('tick', () => this.tick());
 
+    // Ensure links reference node objects correctly
     this.simulation.force('link')
       .links(this.filteredData.links);
 
@@ -318,15 +309,21 @@ class PowerMapVisualization {
   getDragHandler() {
     return d3.drag()
       .on('start', (event, d) => {
+        if (!d || typeof d !== 'object') {
+          console.error('Invalid node in drag start:', d);
+          return;
+        }
         if (!event.active) this.simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
         d.fy = d.y;
       })
       .on('drag', (event, d) => {
+        if (!d || typeof d !== 'object') return;
         d.fx = event.x;
         d.fy = event.y;
       })
       .on('end', (event, d) => {
+        if (!d || typeof d !== 'object') return;
         if (!event.active) this.simulation.alphaTarget(0);
         d.fx = null;
         d.fy = null;
@@ -344,12 +341,11 @@ class PowerMapVisualization {
   }
 
   colorScale(d) {
-    const a = d3.scaleLinear()
-      .domain([1, 3])         // input: strength range
-      .range(['#ccc', '#F54927']); // output: low → high color
-    console.log('Color scale for strength', d.strength, 'is', a(d.strength));
-    return a;
+    return d3.scaleLinear()
+      .domain([1, 3]) // Adjust domain based on min/max strength in your data
+      .range(['#ccc', '#F54927']); // Gray to red-orange
   }
+
   getLinkWidth(d) {
     return Math.max(1, (d.strength || 1) * 2);
   }
@@ -526,39 +522,45 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
 
     // Count connections for each node
     nodes.forEach(node => {
-      const connections = this.originalData.links.filter(link => {
-        const sourceId = String(link.source.id || link.source);
-        const targetId = String(link.target.id || link.target);
-        return sourceId === String(node.id) || targetId === String(node.id);
-      });
-      nodeConnections.set(String(node.id), connections.length);
+      const connections = this.getConnections(node).length;
+      nodeConnections.set(node.id, connections);
     });
 
-    // Filter nodes based on connection count
-    return nodes.filter(node => {
-      const connectionCount = nodeConnections.get(String(node.id)) || 0;
-      return connectionCount >= maxDepth;
-    });
+    return nodes.filter(node => nodeConnections.get(node.id) >= maxDepth);
   }
 
-  // Zoom methods - Fixed to work properly
+  calculateStats() {
+    const nodes = this.filteredData.nodes;
+    const links = this.filteredData.links;
+    return {
+      totalNodes: nodes.length,
+      totalLinks: links.length,
+      averageInfluence: nodes.length > 0 ? (nodes.reduce((sum, n) => sum + n.influence, 0) / nodes.length).toFixed(1) : 0,
+      averageSupport: nodes.length > 0 ? (nodes.reduce((sum, n) => sum + n.support, 0) / nodes.length).toFixed(1) : 0,
+      networkDensity: this.calculateNetworkDensity(nodes, links),
+      highInfluenceCount: nodes.filter(n => n.influence >= 4).length,
+      supportersCount: nodes.filter(n => n.support >= 4).length,
+      oppositionCount: nodes.filter(n => n.support <= 2).length
+    };
+  }
+
+  calculateNetworkDensity(nodes, links) {
+    if (nodes.length < 2) return '0%';
+    const maxPossibleLinks = nodes.length * (nodes.length - 1) / 2;
+    const density = (links.length / maxPossibleLinks) * 100;
+    return density.toFixed(1) + '%';
+  }
+
   zoomIn() {
-    this.svg.transition().duration(300).call(
-      this.zoom.scaleBy, 1.5
-    );
+    this.svg.transition().call(this.zoom.scaleBy, 1.2);
   }
 
   zoomOut() {
-    this.svg.transition().duration(300).call(
-      this.zoom.scaleBy, 0.75
-    );
+    this.svg.transition().call(this.zoom.scaleBy, 0.8);
   }
 
   resetZoom() {
-    this.svg.transition().duration(500).call(
-      this.zoom.transform,
-      d3.zoomIdentity
-    );
+    this.svg.transition().call(this.zoom.transform, d3.zoomIdentity);
   }
 
   centerView() {
@@ -621,10 +623,144 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
   // Stats update
   updateStats() {
     const stats = this.calculateStats();
-    this.updateStatsDisplay(stats);
+    const elements = {
+      'filtered-count': stats.totalNodes,
+      'relationships-count': stats.totalLinks,
+      'avg-influence': stats.averageInfluence,
+      'network-density': stats.networkDensity
+    };
+    Object.entries(elements).forEach(([id, value]) => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = value;
+    });
   }
 
-  calculateStats() {
+  calculateNetworkMetrics() {
+    const nodes = this.filteredData.nodes;
+    const links = this.filteredData.links;
+    const metrics = {
+      degreeCentrality: new Map(),
+      clusteringCoefficient: new Map(),
+      betweennessCentrality: new Map(),
+      networkDiameter: 0
+    };
+
+    // Degree Centrality: Number of connections per node
+    nodes.forEach(node => {
+      const degree = links.filter(link => {
+        const sourceId = link.source.id || link.source;
+        const targetId = link.target.id || link.target;
+        return sourceId === node.id || targetId === node.id;
+      }).length;
+      metrics.degreeCentrality.set(node.id, { name: node.name, degree });
+    });
+
+    // Clustering Coefficient: How connected a node's neighbors are
+    nodes.forEach(node => {
+      const neighbors = this.getConnections(node).map(n => n.id);
+      if (neighbors.length < 2) {
+        metrics.clusteringCoefficient.set(node.id, { name: node.name, coefficient: 0 });
+        return;
+      }
+      let actualEdges = 0;
+      neighbors.forEach(n1 => {
+        neighbors.forEach(n2 => {
+          if (n1 < n2) {
+            const hasEdge = links.some(link => {
+              const sourceId = link.source.id || link.source;
+              const targetId = link.target.id || link.target;
+              return (sourceId === n1 && targetId === n2) || (sourceId === n2 && targetId === n1);
+            });
+            if (hasEdge) actualEdges++;
+          }
+        });
+      });
+      const possibleEdges = (neighbors.length * (neighbors.length - 1)) / 2;
+      const coefficient = possibleEdges > 0 ? (actualEdges / possibleEdges).toFixed(2) : 0;
+      metrics.clusteringCoefficient.set(node.id, { name: node.name, coefficient });
+    });
+
+    // Simplified Betweenness Centrality: Count shortest paths passing through each node
+    nodes.forEach(node => {
+      let betweenness = 0;
+      nodes.forEach(source => {
+        if (source.id === node.id) return;
+        nodes.forEach(target => {
+          if (target.id === node.id || target.id === source.id) return;
+          const shortestPaths = this.findShortestPaths(source.id, target.id);
+          const pathsThroughNode = shortestPaths.filter(path =>
+            path.includes(node.id) && path[0] !== node.id && path[path.length - 1] !== node.id
+          ).length;
+          betweenness += pathsThroughNode / (shortestPaths.length || 1);
+        });
+      });
+      metrics.betweennessCentrality.set(node.id, {
+        name: node.name,
+        centrality: betweenness.toFixed(2)
+      });
+    });
+
+    // Network Diameter: Longest shortest path
+    let maxDistance = 0;
+    nodes.forEach(source => {
+      nodes.forEach(target => {
+        if (source.id !== target.id) {
+          const paths = this.findShortestPaths(source.id, target.id);
+          if (paths.length > 0) {
+            const distance = paths[0].length - 1; // Number of edges
+            maxDistance = Math.max(maxDistance, distance);
+          }
+        }
+      });
+    });
+    metrics.networkDiameter = maxDistance;
+
+    return metrics;
+  }
+
+  // Helper method to find shortest paths between two nodes (BFS)
+  findShortestPaths(sourceId, targetId) {
+    const queue = [[sourceId]];
+    const visited = new Set();
+    const paths = [];
+
+    while (queue.length > 0) {
+      const path = queue.shift();
+      const current = path[path.length - 1];
+
+      if (visited.has(current)) continue;
+      visited.add(current);
+
+      if (current === targetId) {
+        paths.push(path);
+        continue; // Continue to find all shortest paths
+      }
+
+      const neighbors = this.filteredData.links
+        .filter(link => {
+          const src = link.source.id || link.source;
+          const tgt = link.target.id || link.target;
+          return src === current || tgt === current;
+        })
+        .map(link => {
+          const src = link.source.id || link.source;
+          const tgt = link.target.id || link.target;
+          return src === current ? tgt : src;
+        });
+
+      neighbors.forEach(neighbor => {
+        if (!path.includes(neighbor)) {
+          queue.push([...path, neighbor]);
+        }
+      });
+    }
+
+    // Filter to keep only shortest paths
+    const minLength = paths.length > 0 ? paths[0].length : Infinity;
+    return paths.filter(path => path.length === minLength);
+  }
+
+  calculateStats2() {
     const total = this.filteredData.nodes.length;
     const highInfluence = this.filteredData.nodes.filter(n => n.influence >= 4).length;
     const supporters = this.filteredData.nodes.filter(n => n.support >= 4).length;
@@ -720,15 +856,9 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
     const container = d3.select(`#${this.containerId}`);
     this.width = container.node().getBoundingClientRect().width || 800;
     this.height = container.node().getBoundingClientRect().height || 600;
-
-    this.svg
-      .attr('width', this.width)
-      .attr('height', this.height);
-
-    this.simulation
-      .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .alpha(0.3)
-      .restart();
+    this.svg.attr('width', this.width).attr('height', this.height);
+    this.simulation.force('center', d3.forceCenter(this.width / 2, this.height / 2));
+    this.simulation.alpha(1).restart();
   }
 
   // Export functionality
@@ -850,6 +980,7 @@ class EnhancedPowerMapController {
       if (event.key === 'Escape') {
         this.clearSearch();
         this.closeContactModal();
+        this.closeNetworkAnalysisModal();
       }
     });
   }
@@ -939,7 +1070,8 @@ class EnhancedPowerMapController {
       'zoom-in': () => this.visualization?.zoomIn(),
       'zoom-out': () => this.visualization?.zoomOut(),
       'reset-view': () => this.visualization?.resetZoom(),
-      'center-view': () => this.visualization?.centerView()
+      'center-view': () => this.visualization?.centerView(),
+      'network-analysis': () => this.showNetworkAnalysis()
     };
 
     Object.entries(controls).forEach(([id, handler]) => {
@@ -976,8 +1108,12 @@ class EnhancedPowerMapController {
     // Close modal when clicking outside
     window.addEventListener('click', (event) => {
       const modal = document.getElementById('contact-details-modal');
+      const networkModal = document.getElementById('network-analysis-modal');
       if (event.target === modal) {
         this.closeContactModal();
+      }
+      if (event.target === networkModal) {
+        this.closeNetworkAnalysisModal();
       }
     });
   }
@@ -990,20 +1126,6 @@ class EnhancedPowerMapController {
     this.filterTimeout = setTimeout(() => {
       this.applyFilters();
     }, 150);
-  }
-
-  showLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-    }
-  }
-
-  hideLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-    }
   }
 
   loadData() {
@@ -1058,8 +1180,7 @@ class EnhancedPowerMapController {
     console.log('Initializing visualization with data:', data);
 
     try {
-      //const cleanedData = this.cleanData(data);
-      const cleanedData = data;
+      const cleanedData = this.cleanData(data);
       console.log('Cleaned data:', cleanedData);
 
       this.visualization = new PowerMapVisualization('powermap-container', cleanedData);
@@ -1093,8 +1214,8 @@ class EnhancedPowerMapController {
 
       // Validate that both source and target exist and are different
       return sourceId !== targetId &&
-          nodeIds.has(sourceId) &&
-          nodeIds.has(targetId);
+        nodeIds.has(sourceId) &&
+        nodeIds.has(targetId);
     }).map(link => ({
       ...link,
       source: String(link.source.id || link.source),
@@ -1140,7 +1261,7 @@ class EnhancedPowerMapController {
 
   updateRelationshipTypeFilter() {
     this.filters.relationshipTypes = Array.from(
-        document.querySelectorAll('.relationship-checkbox:checked')
+      document.querySelectorAll('.relationship-checkbox:checked')
     ).map(cb => cb.value);
     this.applyFiltersDebounced();
   }
@@ -1236,29 +1357,19 @@ class EnhancedPowerMapController {
 
     try {
       const stats = this.visualization.calculateStats();
-      const filteredNodes = this.visualization.filteredData.nodes;
-      const filteredLinks = this.visualization.filteredData.links;
-
-      // Calculate additional metrics
-      const avgInfluence = filteredNodes.length > 0
-          ? (filteredNodes.reduce((sum, n) => sum + n.influence, 0) / filteredNodes.length).toFixed(1)
-          : 0;
-
-      const networkDensity = this.calculateNetworkDensity(filteredNodes, filteredLinks);
-
-      // Update quick stats
       const elements = {
-        'filtered-count': filteredNodes.length,
-        'relationships-count': filteredLinks.length,
-        'avg-influence': avgInfluence,
-        'network-density': networkDensity
+        'filtered-count': stats.totalNodes,
+        'relationships-count': stats.totalLinks,
+        'avg-influence': stats.averageInfluence,
+        'network-density': stats.networkDensity,
+        'stat-total': stats.totalNodes,
+        'stat-influence': stats.highInfluenceCount,
+        'stat-supporters': stats.supportersCount,
+        'stat-opposition': stats.oppositionCount
       };
-
       Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element) {
-          element.textContent = value;
-        }
+        if (element) element.textContent = value;
       });
     } catch (error) {
       console.error('Error updating quick stats:', error);
@@ -1386,10 +1497,151 @@ class EnhancedPowerMapController {
         `;
 
         modal.style.display = 'block';
+        modal.setAttribute('aria-hidden', 'false');
+        modal.querySelector('.modal-content').focus();
       } catch (error) {
         console.error('Error showing contact details:', error);
       }
     }
+  }
+
+  // Network analysis metrics
+  showNetworkAnalysis() {
+    if (!this.visualization) return;
+
+    const modal = document.getElementById('network-analysis-modal');
+    const content = document.getElementById('network-analysis-content');
+
+    if (!modal || !content) {
+      console.error('Network analysis modal or content not found');
+      return;
+    }
+
+    try {
+      const metrics = this.visualization.calculateNetworkMetrics();
+      const stats = this.visualization.calculateStats();
+
+      // Generate HTML for metrics
+      const degreeCentralityHTML = Array.from(metrics.degreeCentrality)
+        .sort((a, b) => b[1].degree - a[1].degree)
+        .slice(0, 5) // Top 5 nodes
+        .map(([id, { name, degree }]) => `
+          <tr>
+            <td>${this.escapeHtml(name)}</td>
+            <td>${degree}</td>
+          </tr>
+        `).join('');
+
+      const clusteringHTML = Array.from(metrics.clusteringCoefficient)
+        .sort((a, b) => b[1].coefficient - a[1].coefficient)
+        .slice(0, 5)
+        .map(([id, { name, coefficient }]) => `
+          <tr>
+            <td>${this.escapeHtml(name)}</td>
+            <td>${coefficient}</td>
+          </tr>
+        `).join('');
+
+      const betweennessHTML = Array.from(metrics.betweennessCentrality)
+        .sort((a, b) => b[1].centrality - a[1].centrality)
+        .slice(0, 5)
+        .map(([id, { name, centrality }]) => `
+          <tr>
+            <td>${this.escapeHtml(name)}</td>
+            <td>${centrality}</td>
+          </tr>
+        `).join('');
+
+      content.innerHTML = `
+        <div class="network-analysis">
+          <h3>Network Analysis</h3>
+          <div class="analysis-section">
+            <h4>Overview</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <strong>Total Nodes:</strong> ${stats.totalNodes}
+              </div>
+              <div class="detail-item">
+                <strong>Total Relationships:</strong> ${stats.totalLinks}
+              </div>
+              <div class="detail-item">
+                <strong>Network Density:</strong> ${stats.networkDensity}
+              </div>
+              <div class="detail-item">
+                <strong>Network Diameter:</strong> ${metrics.networkDiameter} edges
+              </div>
+            </div>
+          </div>
+          <div class="analysis-section">
+            <h4>Top 5 by Degree Centrality</h4>
+            <p class="analysis-help">Nodes with the most connections</p>
+            <table class="analysis-table">
+              <thead>
+                <tr><th>Name</th><th>Connections</th></tr>
+              </thead>
+              <tbody>${degreeCentralityHTML}</tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h4>Top 5 by Clustering Coefficient</h4>
+            <p class="analysis-help">Nodes with tightly connected neighbors</p>
+            <table class="analysis-table">
+              <thead>
+                <tr><th>Name</th><th>Coefficient</th></tr>
+              </thead>
+              <tbody>${clusteringHTML}</tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h4>Top 5 by Betweenness Centrality</h4>
+            <p class="analysis-help">Nodes acting as bridges in the network</p>
+            <table class="analysis-table">
+              <thead>
+                <tr><th>Name</th><th>Centrality</th></tr>
+              </thead>
+              <tbody>${betweennessHTML}</tbody>
+            </table>
+          </div>
+          <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+            <button class="btn btn-secondary" onclick="window.powermapController.closeAnalysisModal()">
+              Close
+            </button>
+          </div>
+        </div>
+      `;
+
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.querySelector('.modal-content').focus();
+
+      // Trap focus in modal
+      this.trapFocus(modal);
+    } catch (error) {
+      console.error('Error showing network analysis:', error);
+    }
+  }
+
+  // Helper method to trap focus in modal
+  trapFocus(modal) {
+    const focusableElements = modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    modal.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab') {
+        if (event.shiftKey && document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        } else if (!event.shiftKey && document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
+    });
   }
 
   highlightContactNetwork(contactId) {
@@ -1415,8 +1667,8 @@ class EnhancedPowerMapController {
       ];
 
       this.visualization.svg.transition().duration(750).call(
-          this.visualization.zoom.transform,
-          d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+        this.visualization.zoom.transform,
+        d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
       );
 
       this.closeContactModal();
@@ -1427,6 +1679,15 @@ class EnhancedPowerMapController {
     const modal = document.getElementById('contact-details-modal');
     if (modal) {
       modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  closeAnalysisModal() {
+    const modal = document.getElementById('network-analysis-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
     }
   }
 
@@ -1454,7 +1715,20 @@ class EnhancedPowerMapController {
     }, 100);
   }
 
-  // Method to add new stakeholder programmatically
+  showLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+    }
+  }
+
+  hideLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
+  }
+
   addStakeholder(stakeholderData) {
     if (!this.visualization) return false;
 
@@ -1494,22 +1768,8 @@ class EnhancedPowerMapController {
     }
   }
 
-  // Method to get current network statistics
   getNetworkStats() {
     if (!this.visualization) return null;
-
-    const nodes = this.visualization.filteredData.nodes;
-    const links = this.visualization.filteredData.links;
-
-    return {
-      totalNodes: nodes.length,
-      totalLinks: links.length,
-      averageInfluence: nodes.length > 0 ? nodes.reduce((sum, n) => sum + n.influence, 0) / nodes.length : 0,
-      averageSupport: nodes.length > 0 ? nodes.reduce((sum, n) => sum + n.support, 0) / nodes.length : 0,
-      networkDensity: this.calculateNetworkDensity(nodes, links),
-      highInfluenceCount: nodes.filter(n => n.influence >= 4).length,
-      supportersCount: nodes.filter(n => n.support >= 4).length,
-      oppositionCount: nodes.filter(n => n.support <= 2).length
-    };
+    return this.visualization.calculateStats();
   }
 }
