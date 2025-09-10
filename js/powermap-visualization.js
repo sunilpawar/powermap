@@ -98,9 +98,9 @@ class PowerMapVisualization {
   setupZoom() {
     this.zoom = d3.zoom()
       .scaleExtent([0.1, 4])
-      .on('zoom', (event) => {
-        this.currentTransform = event.transform;
-        this.mainGroup.attr('transform', event.transform);
+      .on('zoom', () => {
+        this.currentTransform = d3.event.transform;
+        this.mainGroup.attr('transform', d3.event.transform);
       });
 
     this.svg.call(this.zoom);
@@ -166,7 +166,7 @@ class PowerMapVisualization {
       }));
   }
 
-  renderLinks() {
+  renderLinks2() {
     const links = this.linksGroup
       .selectAll('.link')
       .data(this.filteredData.links, d => `${d.source}-${d.target}`);
@@ -189,6 +189,49 @@ class PowerMapVisualization {
 
     this.links = linksEnter.merge(links);
   }
+
+  renderLinks() {
+    const links = this.linksGroup
+      .selectAll('.link')
+      .data(this.filteredData.links, d => `${d.source}-${d.target}`);
+
+    links.exit().remove();
+
+    const linksEnter = links.enter()
+      .append('line')
+      .attr('class', 'link')
+      .attr('stroke', '#FFA500')
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', d => this.getLinkWidth(d))
+      .attr('marker-end', 'url(#arrowhead)')
+      .style('cursor', 'pointer');
+
+    // Hover tooltip
+    linksEnter
+      .on('mouseover', (event, d) => this.showLinkTooltip(event, d))
+      .on('mouseout', () => this.hideTooltip());
+
+    this.links = linksEnter.merge(links);
+
+    // ---- ADD LABELS ----
+    const linkLabels = this.linksGroup
+      .selectAll('.link-label')
+      .data(this.filteredData.links, d => `${d.source}-${d.target}`);
+
+    linkLabels.exit().remove();
+
+    const labelsEnter = linkLabels.enter()
+      .append('text')
+      .attr('class', 'link-label')
+      .attr('text-anchor', 'middle')
+      .attr('dy', -2) // shift slightly above line
+      .style('font-size', '10px')
+      .style('fill', '#555')
+      .text(d => d.type);
+
+    this.linkLabels = labelsEnter.merge(linkLabels);
+  }
+
 
   renderNodes() {
     const nodes = this.nodesGroup
@@ -267,6 +310,9 @@ class PowerMapVisualization {
         .attr('x', d => d.x)
         .attr('y', d => d.y + this.getNodeRadius(d) + 15);
     }
+    this.linkLabels
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2);
   }
 
   getDragHandler() {
@@ -297,6 +343,13 @@ class PowerMapVisualization {
     return this.colors.low;
   }
 
+  colorScale(d) {
+    const a = d3.scaleLinear()
+      .domain([1, 3])         // input: strength range
+      .range(['#ccc', '#F54927']); // output: low → high color
+    console.log('Color scale for strength', d.strength, 'is', a(d.strength));
+    return a;
+  }
   getLinkWidth(d) {
     return Math.max(1, (d.strength || 1) * 2);
   }
@@ -324,8 +377,8 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
   }
 
   showLinkTooltip(event, d) {
-    const sourceNode = this.filteredData.nodes.find(n => n.id === (d.source.id || d.source));
-    const targetNode = this.filteredData.nodes.find(n => n.id === (d.target.id || d.target));
+    const sourceNode = this.filteredData.nodes.find(n => n.id === d.source);
+    const targetNode = this.filteredData.nodes.find(n => n.id === d.target);
 
     this.tooltip.transition()
       .duration(200)
@@ -962,11 +1015,11 @@ class EnhancedPowerMapController {
         this.initializeVisualization(window.powermapData);
       } else {
         console.log('No valid data found, using demo data');
-        this.loadDemoData();
+        //this.loadDemoData();
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      this.loadDemoData();
+      //this.loadDemoData();
     } finally {
       this.hideLoading();
     }

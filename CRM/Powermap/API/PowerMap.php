@@ -2,6 +2,36 @@
 
 class CRM_Powermap_API_PowerMap {
 
+  public static function getCustomFieldInfo($fieldName) {
+    static $cache = [];
+
+    if (isset($cache[$fieldName])) {
+      return $cache[$fieldName];
+    }
+
+    try {
+      $result = civicrm_api3('CustomField', 'getsingle', [
+        'name' => $fieldName,
+      ]);
+
+      $groupResult = civicrm_api3('CustomGroup', 'getsingle', [
+        'id' => $result['custom_group_id'],
+      ]);
+
+      $cache[$fieldName] = [
+        'table_name' => $groupResult['table_name'],
+        'column_name' => $result['column_name'],
+        'column_id' => $result['id'],
+        'column_field' => 'custom_' . $result['id'],
+      ];
+
+      return $cache[$fieldName];
+    }
+    catch (Exception $e) {
+      return NULL;
+    }
+  }
+
   /**
    * Get network data for visualization
    */

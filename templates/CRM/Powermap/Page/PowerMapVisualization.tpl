@@ -141,6 +141,32 @@
             🖼️ Export PNG
           </button>
         </div>
+        <div class="group-select">
+          <form method="POST">
+          <table>
+            <tr>
+              <td>
+                <label for="group_id" class="group-label">Select Group:</label>
+                <select name="group_id" id="group_id" class="crm-form-select">
+                  <option value="">- select -</option>
+                  {foreach from=$groups key=val item=group}
+                    <option value="{$val}">{$group} - (#{$val})</option>
+                  {/foreach}
+                </select>
+                <br />
+                <input type="checkbox" id="only_relationship" name="only_relationship">
+                <label for="only_relationship"> Show only contacts with relationships in this group</label>
+              </td>
+              <td>
+                <span class="crm-button crm-button-type-submit crm-icon-button">
+                  <span class="crm-button-icon ui-icon-check"> </span>
+                  <input type="submit" name="generate_group_powermap" id="generate_group_powermap" class="crm-form-submit" crm-icon="check" value="Generate Group Power Map" />
+                </span>
+              </td>
+            </tr>
+          </table>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -190,6 +216,7 @@
 
   {literal}
   <script type="text/javascript">
+    CRM.$("#group_id").select2();
     // Pass data from PHP to JavaScript
     window.powermapData = {/literal}{$contactsJson}{literal};
 
