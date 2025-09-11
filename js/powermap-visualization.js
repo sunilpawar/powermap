@@ -8,6 +8,7 @@ class PowerMapVisualization {
     this.simulation = null;
     this.svg = null;
     this.tooltip = null;
+    this.tooltipTimeout = null;
     this.currentTransform = d3.zoomIdentity;
     this.zoom = null;
 
@@ -81,8 +82,10 @@ class PowerMapVisualization {
       .style('padding', '12px')
       .style('border-radius', '8px')
       .style('font-size', '14px')
-      .style('pointer-events', 'none')
-      .style('z-index', '1000');
+      .style('pointer-events', 'none') // KEY FIX: Prevents tooltip from interfering with mouse events
+      .style('z-index', '1000')
+      .style('max-width', '300px')
+      .style('white-space', 'nowrap');
   }
 
   setupSimulation() {
@@ -195,12 +198,12 @@ class PowerMapVisualization {
       .attr('marker-end', 'url(#arrowhead)')
       .style('cursor', 'pointer');
 
-    // Hover tooltip
-    linksEnter
+    this.links = linksEnter.merge(links);
+
+    // Attach events to all links
+    this.links
       .on('mouseover', (event, d) => this.showLinkTooltip(event, d))
       .on('mouseout', () => this.hideTooltip());
-
-    this.links = linksEnter.merge(links);
 
     // ---- ADD LABELS ----
     const linkLabels = this.linksGroup
@@ -221,6 +224,7 @@ class PowerMapVisualization {
     this.linkLabels = labelsEnter.merge(linkLabels);
   }
 
+// Also need to fix the click handler in renderNodes to handle this issue
   renderNodes() {
     const nodes = this.nodesGroup
       .selectAll('.node')
@@ -236,16 +240,47 @@ class PowerMapVisualization {
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
-      .call(this.getDragHandler())
       .attr('aria-label', d => `Node: ${d.name}, Influence: ${d.influence}/5, Support: ${d.support}/5`);
 
-    // Add hover and click events with vibration effect
-    nodesEnter
-      .on('mouseover', (event, d) => this.showNodeTooltip(event, d))
-      .on('mouseout', () => this.hideTooltip())
-      .on('click', (event, d) => this.highlightConnections(d));
-
     this.nodes = nodesEnter.merge(nodes);
+
+    // Attach behaviors to all nodes
+    this.nodes
+      .call(this.getDragHandler())
+      .on('mouseover', (event, d) => {
+        if (this.tooltipTimeout) {
+          clearTimeout(this.tooltipTimeout);
+        }
+        // Ensure we have the full node object
+        const nodeData = typeof d === 'object' ? d : this.filteredData.nodes.find(n => n.id === String(d));
+        if (nodeData) {
+          // Small delay to prevent rapid firing
+          this.tooltipTimeout = setTimeout(() => {
+            this.showNodeTooltip(event, nodeData);
+          }, 100);
+        }
+      })
+      .on('mouseout', () => {
+        // Clear timeout and hide tooltip
+        if (this.tooltipTimeout) {
+          clearTimeout(this.tooltipTimeout);
+        }
+        this.hideTooltip();
+      })
+      .on('mouseleave', () => {
+        // Clear timeout and hide tooltip
+        if (this.tooltipTimeout) {
+          clearTimeout(this.tooltipTimeout);
+        }
+        this.hideTooltip();
+      })
+      .on('click', (event, d) => {
+        // Ensure we have the full node object
+        const nodeData = typeof d === 'object' ? d : this.filteredData.nodes.find(n => n.id === String(d));
+        if (nodeData) {
+          this.highlightConnections(nodeData);
+        }
+      });
   }
 
   renderLabels() {
@@ -284,10 +319,34 @@ class PowerMapVisualization {
   tick() {
     if (this.links) {
       this.links
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+        .attr('x1', d => {
+          const r = this.getNodeRadius(d.source);
+          const dx = d.target.x - d.source.x;
+          const dy = d.target.y - d.source.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          return d.source.x + (dx * r) / dist;
+        })
+        .attr('y1', d => {
+          const r = this.getNodeRadius(d.source);
+          const dx = d.target.x - d.source.x;
+          const dy = d.target.y - d.source.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          return d.source.y + (dy * r) / dist;
+        })
+        .attr('x2', d => {
+          const r = this.getNodeRadius(d.target);
+          const dx = d.source.x - d.target.x;
+          const dy = d.source.y - d.target.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          return d.target.x + (dx * r) / dist;
+        })
+        .attr('y2', d => {
+          const r = this.getNodeRadius(d.target);
+          const dx = d.source.x - d.target.x;
+          const dy = d.source.y - d.target.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          return d.target.y + (dy * r) / dist;
+        });
     }
 
     if (this.nodes) {
@@ -325,8 +384,8 @@ class PowerMapVisualization {
       .on('end', (event, d) => {
         if (!d || typeof d !== 'object') return;
         if (!event.active) this.simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        d.fx = event.x;
+        d.fy = event.y;
       });
   }
 
@@ -351,8 +410,46 @@ class PowerMapVisualization {
   }
 
   showNodeTooltip(event, d) {
-    const connections = this.getConnections(d);
-    const relationshipDetails = this.getRelationshipDetails(d);
+    // Handle case where d might be just an ID (number) instead of the full node object
+    let nodeData = d;
+    console.log('Showing tooltip for d:', d);
+    // If d is just a number/string ID, find the actual node object
+    if (typeof d === 'number' || typeof d === 'string') {
+      nodeData = this.filteredData.nodes.find(node => node.id === String(d));
+      console.log('Showing tooltip for nodeData:', nodeData);
+      if (!nodeData) {
+        console.warn('Node not found for ID:', d);
+        return;
+      }
+    }
+
+    // Validate that we have a proper node object
+    if (!nodeData || typeof nodeData !== 'object' || !nodeData.name) {
+      console.warn('Invalid node data in tooltip:', nodeData);
+      return;
+    }
+
+    const connections = this.getConnections(nodeData);
+    const relationshipDetails = this.getRelationshipDetails(nodeData);
+
+    // Calculate stable position
+    const tooltipWidth = 300; // Approximate tooltip width
+    const tooltipHeight = 200; // Approximate tooltip height
+    const offset = 15;
+
+    let left = event.pageX + offset;
+    let top = event.pageY - tooltipHeight/2;
+
+    // Keep tooltip on screen
+    if (left + tooltipWidth > window.innerWidth) {
+      left = event.pageX - tooltipWidth - offset;
+    }
+    if (top < 0) {
+      top = 10;
+    }
+    if (top + tooltipHeight > window.innerHeight) {
+      top = window.innerHeight - tooltipHeight - 10;
+    }
 
     this.tooltip.transition()
       .duration(200)
@@ -360,18 +457,17 @@ class PowerMapVisualization {
 
     this.tooltip.html(`
 <div class="tooltip-content">
-<h4>${d.name}</h4>
-<p><strong>Type:</strong> ${d.type}</p>
-<p><strong>Influence:</strong> ${d.influence}/5 ${this.getInfluenceLabel(d.influence)}</p>
-<p><strong>Support:</strong> ${d.support}/5 ${this.getSupportLabel(d.support)}</p>
+<h4>${nodeData.name}</h4>
+<p><strong>Type:</strong> ${nodeData.type}</p>
+<p><strong>Influence:</strong> ${nodeData.influence}/5 ${this.getInfluenceLabel(nodeData.influence)}</p>
+<p><strong>Support:</strong> ${nodeData.support}/5 ${this.getSupportLabel(nodeData.support)}</p>
 <p><strong>Connections:</strong> ${connections.length}</p>
 ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' + relationshipDetails.map(r => `<li>${r}</li>`).join('') + '</ul>' : ''}
 </div>
 `)
-      .style('left', (event.pageX + 10) + 'px')
-      .style('top', (event.pageY - 28) + 'px');
+      .style('left', left + 'px')
+      .style('top', top + 'px');
   }
-
   showLinkTooltip(event, d) {
     const sourceNode = this.filteredData.nodes.find(n => n.id === d.source);
     const targetNode = this.filteredData.nodes.find(n => n.id === d.target);
@@ -394,8 +490,12 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
   }
 
   hideTooltip() {
+    if (this.tooltipTimeout) {
+      clearTimeout(this.tooltipTimeout);
+    }
+
     this.tooltip.transition()
-      .duration(500)
+      .duration(150) // Faster hide transition
       .style('opacity', 0);
   }
 
@@ -409,21 +509,29 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
     return labels[support] || '';
   }
 
+  getConnections(node) {
+    return this.filteredData.links.filter(link => {
+      const source = typeof link.source === 'object' ? link.source.id : link.source;
+      const target = typeof link.target === 'object' ? link.target.id : link.target;
+      return source === node.id || target === node.id;
+    });
+  }
+
   getRelationshipDetails(node) {
     const relationships = [];
     this.filteredData.links.forEach(link => {
-      const sourceId = link.source.id || link.source;
-      const targetId = link.target.id || link.target;
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
 
       if (sourceId === node.id) {
         const targetNode = this.filteredData.nodes.find(n => n.id === targetId);
         if (targetNode) {
-          relationships.push(`${link.type} → ${targetNode.name}`);
+          relationships.push(`${link.type} → ${targetNode.name} (Strength: ${link.strength})`);
         }
       } else if (targetId === node.id) {
         const sourceNode = this.filteredData.nodes.find(n => n.id === sourceId);
         if (sourceNode) {
-          relationships.push(`${sourceNode.name} → ${link.type}`);
+          relationships.push(`${sourceNode.name} → ${link.type} (Strength: ${link.strength})`);
         }
       }
     });
@@ -453,17 +561,6 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
 
     this.labels
       .style('opacity', d => connectedIds.has(d.id) ? 1 : 0.3);
-  }
-
-  getConnections(node) {
-    return this.filteredData.nodes.filter(n => {
-      return this.filteredData.links.some(link => {
-        const sourceId = link.source.id || link.source;
-        const targetId = link.target.id || link.target;
-        return ((sourceId === node.id && targetId === n.id) ||
-          (targetId === node.id && sourceId === n.id));
-      });
-    });
   }
 
   truncateText(text, maxLength) {

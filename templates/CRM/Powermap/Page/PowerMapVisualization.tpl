@@ -12,16 +12,20 @@
   - Export functionality (CSV, PNG)
   - Modal dialogs for detailed contact information
   - Accessibility features and keyboard shortcuts
+  - Dark mode support
+  - Performance optimizations
 
   Template Variables:
   - $pageTitle: Page title for display
   - $groups: Available CiviCRM groups for filtering
   - $contactsJson: JSON-encoded network data for visualization
   - $currentGroupId: Currently selected group ID (optional)
+  - $currentContact: Currently selected contact ID (optional)
   - $onlyRelationship: Whether relationship-only mode is active
 
   @author PowerMap Team
   @since 1.0.0
+  @updated 2025
 *}
 
 {* Main container with flexbox layout for responsive design *}
@@ -233,13 +237,35 @@
 
               <div class="form-group">
                 <div class="checkbox-container">
-                  <input type="checkbox" id="only_relationship" name="only_relationship" {if $onlyRelationship}checked{/if}aria-describedby="relationship-help"/>
+                  <input type="checkbox" id="only_relationship" name="only_relationship" {if $onlyRelationship}checked{/if} aria-describedby="relationship-help"/>
                   <label for="only_relationship">
                     Show only contacts with relationships
                   </label>
                 </div>
                 <div id="relationship-help" class="field-help">
                   <small>Hide isolated contacts with no relationships</small>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="label">
+                  <label for="contact_id">{ts}Contact{/ts}</label>
+                </div>
+                <div class="content">
+                  <input type="text"
+                         id="contact_id"
+                         name="contact_id"
+                         class="crm-form-entityref form-control"
+                         data-api-entity="Contact"
+                         data-select-params='{literal}{"multiple":true}{/literal}'
+                         data-api-params='{literal}{"extra":["email","phone"]}{/literal}'
+                         data-select-prompt="- Select Contact -"
+                         data-create-links="1"
+                         placeholder="{ts}Start typing contact name...{/ts}"
+                         aria-describedby="contact-help" />
+                </div>
+                <div id="contact-help" class="field-help">
+                  <small>Select specific contacts to highlight in the network</small>
                 </div>
               </div>
 
@@ -407,6 +433,7 @@
       </div>
     </div>
   </div>
+
   <div id="network-analysis-modal" class="powermap-modal" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
@@ -463,6 +490,7 @@
               <dt>Ctrl/Cmd + 0</dt><dd>Reset view</dd>
               <dt>Ctrl/Cmd + F</dt><dd>Focus search</dd>
               <dt>Esc</dt><dd>Clear search or close modals</dd>
+              <dt>F1</dt><dd>Open help</dd>
             </dl>
           </section>
 
@@ -511,6 +539,15 @@
         );
       }
     });
+
+    {/literal}{if !empty($currentContact)}{literal}
+    var currentContact = '{/literal}{$currentContact}{literal}';
+    CRM.$('#contact_id').val(currentContact).trigger('change');
+    {/literal}{/if}{literal}
+
+    {/literal}{if !empty($onlyRelationship)}{literal}
+    CRM.$('#only_relationship').prop('checked', true);
+    {/literal}{/if}{literal}
 
     // Auto-submit form when group selection changes
     $('#group_id').on('change', function() {
@@ -728,7 +765,7 @@
     }
   }
 
-  // Error state management
+  // Error state management with user-friendly messaging
   function showErrorState(error) {
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorOverlay = document.getElementById('error-overlay');

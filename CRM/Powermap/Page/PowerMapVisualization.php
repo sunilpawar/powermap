@@ -58,10 +58,7 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
       $this->prepareTemplateData($params);
 
       // Get and assign contact network data
-      $networkData = $this->getContactsWithRelationships(
-        $params['group_id'],
-        $params['only_relationship']
-      );
+      $networkData = $this->getContactsWithRelationships($params);
       //echo json_encode($networkData); exit;
       $this->assign('contactsJson', json_encode($networkData));
 
@@ -101,10 +98,13 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
    *
    * @return array Processed parameters with defaults
    */
-  private function processRequestParameters() {
+  private function processRequestParameters(): array {
+    $contactIDs = !empty($_REQUEST['contact_id']) ? explode(',', $_REQUEST['contact_id']) : [];
+    $contactIDs = array_map('trim', $contactIDs);
     return [
-      'group_id' => !empty($_REQUEST['group_id']) ? (int) $_REQUEST['group_id'] : NULL,
+      'group_id' => !empty($_REQUEST['group_id']) ? (int)$_REQUEST['group_id'] : NULL,
       'only_relationship' => !empty($_REQUEST['only_relationship']),
+      'contact_id' => $contactIDs
     ];
   }
 
@@ -126,6 +126,7 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
     // Pass current parameters to template for state management
     $this->assign('currentGroupId', $params['group_id']);
     $this->assign('onlyRelationship', $params['only_relationship']);
+    $this->assign('currentContact', implode(',', $params['contact_id']));
   }
 
   /**
@@ -138,14 +139,18 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
    * 4. Adds missing contacts referenced in relationships
    * 5. Filters data based on view mode (relationship-only vs all)
    *
-   * @param int|null $groupID Group ID to filter contacts (optional)
-   * @param bool $onlyRelationship Whether to show only contacts with relationships
+   * @param array $params Group ID to filter contacts (optional)
    * @return array Network data structure with nodes and links
    */
-  private function getContactsWithRelationships($groupID = NULL, $onlyRelationship = FALSE) {
-    // Step 1: Get initial contact IDs
-    $contactIds = $this->getContactIdsFromGroup($groupID);
+  private function getContactsWithRelationships($params) {
+    $groupID = $params['group_id'] ?? NULL;
+    $onlyRelationship = $params['only_relationship'] ?? FALSE;
+    $contactIds = $params['contact_id'] ?? [];
 
+    if (empty($contactIds)) {
+      // Step 1: Get initial contact IDs
+      $contactIds = $this->getContactIdsFromGroup($groupID);
+    }
     // Step 2: Get contact details with custom field values
     [$contacts, $contactStrengthLevels] = $this->getContactDetails($contactIds);
 
@@ -296,14 +301,12 @@ class CRM_Powermap_Page_PowerMapVisualization extends CRM_Core_Page {
       $relationshipResult = \Civi\Api4\Relationship::get(TRUE)
         ->addSelect('contact_id_a', 'contact_id_b', 'relationship_type.label_a_b')
         ->addJoin('RelationshipType AS relationship_type', 'INNER')
-        ->addWhere('contact_id_a', 'IN', $contactIds)
-        ->addClause('OR', ['contact_id_b', 'IN', $contactIds])
+        ->addClause('OR', ['contact_id_a', 'IN', $contactIds], ['contact_id_b', 'IN', $contactIds])
         ->addWhere('is_active', '=', TRUE)
-        ->execute();
+        ->execute()->getArrayCopy();
 
       $relationships = [];
       $relationshipContactIds = [];
-
       foreach ($relationshipResult as $relationship) {
         // Skip self-relationships (shouldn't happen but safety check)
         if ($relationship['contact_id_a'] == $relationship['contact_id_b']) {
