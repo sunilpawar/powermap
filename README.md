@@ -88,7 +88,7 @@ PowerMap is a comprehensive CiviCRM extension that provides powerful stakeholder
 1. **Download the extension**
    ```bash
    cd [civicrm_extensions_directory]
-   git clone https://github.com/your-org/powermap.git
+   git clone https://github.com/sunilpawar/powermap.git
    ```
 
 2. **Install via CiviCRM Admin**
