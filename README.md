@@ -4,6 +4,9 @@
 
 PowerMap is a comprehensive CiviCRM extension that provides powerful stakeholder network visualization and analysis capabilities. It transforms your contact relationships into interactive, force-directed network diagrams that help you understand influence patterns, support levels, and strategic relationships within your network.
 
+![Screenshot](/images/powermap_visualization.png)
+
+
 ## 🌟 Features
 
 ### Interactive Network Visualization
@@ -161,17 +164,18 @@ The extension automatically creates the following custom fields:
 #### Get Network Data
 ```php
 $result = civicrm_api3('PowerMap', 'getnetworkdata', [
+  'group_id' => 123,
   'influence_min' => 3,
-  'support_min' => 2,
-  'relationship_types' => ['Employee of', 'Volunteer for']
+  'only_relationship' => TRUE
 ]);
 ```
 
 #### Export to CSV
 ```php
-$result = civicrm_api3('PowerMap', 'exporttocsv', [
-  'influence_min' => 1,
-  'support_min' => 1
+// Export CSV for specific contacts
+$csv = civicrm_api3('PowerMap', 'exporttocsv', [
+  'contact_id' => [101, 102, 103],
+  'support_min' => 4
 ]);
 ```
 
@@ -236,21 +240,6 @@ public static function calculateInfluenceScore($contactId) {
 }
 ```
 
-### Styling Customization
-
-Modify the appearance by editing:
-
-```css
-/* File: css/powermap.css */
-.node {
-  /* Customize node appearance */
-}
-
-.link {
-  /* Customize relationship lines */
-}
-```
-
 ## 🔍 Troubleshooting
 
 ### Common Issues
@@ -273,13 +262,6 @@ Modify the appearance by editing:
 3. Ensure both contacts exist and are not deleted
 4. Check relationship type configurations
 
-### Debug Mode
-
-Enable debug mode by adding to your CiviCRM settings:
-
-```php
-define('CIVICRM_POWERMAP_DEBUG', TRUE);
-```
 
 ## 📈 Performance Optimization
 
@@ -288,20 +270,13 @@ define('CIVICRM_POWERMAP_DEBUG', TRUE);
 For networks with 1000+ contacts:
 
 1. **Use filters** to reduce visible nodes
-2. **Implement pagination** for very large datasets
-3. **Cache network calculations**
 4. **Use database indexes** on custom fields
 
-### Browser Performance
+## About Skvare
 
-1. **Limit simultaneous animations**
-2. **Use requestAnimationFrame** for smooth updates
-3. **Implement virtual scrolling** for large lists
-4. **Optimize D3.js selections**
+Skvare LLC specializes in CiviCRM development, Drupal integration, and providing technology solutions for nonprofit organizations, professional societies, membership-driven associations, and small businesses. We are committed to developing open source software that empowers our clients and the wider CiviCRM community.
 
-## 🤝 Contributing
-
-### Development Setup
-
-1. **Clone the repository**
-   ```bash
+**Contact Information**:
+- Website: [https://skvare.com](https://skvare.com/contact)
+- Email: info@skvare.com
+- GitHub: [https://github.com/Skvare](https://github.com/Skvare)
