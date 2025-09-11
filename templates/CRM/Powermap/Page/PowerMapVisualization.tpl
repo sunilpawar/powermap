@@ -102,7 +102,7 @@
       {* Relationship Depth Filter *}
       <div class="filter-group" role="group" aria-labelledby="depth-filter-label">
         <label id="depth-filter-label" class="filter-label" for="relationship-depth-slider">
-          Minimum Relationship Depth
+          Minimum Relationship Connection
         </label>
         <input type="range" id="relationship-depth-slider" class="filter-slider" min="0" max="10" value="0" aria-describedby="depth-description" data-filter="depth"/>
         <div class="slider-value" id="depth-description">
@@ -213,7 +213,7 @@
     <header class="powermap-header" role="banner">
       <div class="header-left">
         <h1 class="powermap-title">{$pageTitle}</h1>
-        <button id="dark-mode-toggle" class="control-btn">Toggle Dark Mode</button>
+        {* <button id="dark-mode-toggle" class="control-btn">Toggle Dark Mode</button> *}
         {* Group Selection Form - Enhanced with better UX *}
         <div class="group-selection-container">
           <form method="GET" class="group-selection-form" role="search" aria-label="Group Selection">
