@@ -9,6 +9,8 @@ class PowerMapVisualization {
     this.svg = null;
     this.tooltip = null;
     this.tooltipTimeout = null;
+    this.tooltipVisible = false;
+    this.currentTooltipNode = null;
     this.currentTransform = d3.zoomIdentity;
     this.zoom = null;
 
@@ -76,16 +78,18 @@ class PowerMapVisualization {
       .append('div')
       .attr('class', 'powermap-tooltip')
       .style('opacity', 0)
-      .style('position', 'absolute')
+      .style('position', 'fixed') // Use fixed instead of absolute for more stable positioning
       .style('background', 'rgba(0, 0, 0, 0.9)')
       .style('color', 'white')
       .style('padding', '12px')
       .style('border-radius', '8px')
       .style('font-size', '14px')
-      .style('pointer-events', 'none') // KEY FIX: Prevents tooltip from interfering with mouse events
-      .style('z-index', '1000')
-      .style('max-width', '300px')
-      .style('white-space', 'nowrap');
+      .style('pointer-events', 'none') // Prevents tooltip from interfering with mouse events
+      .style('z-index', '10000') // Higher z-index to ensure visibility
+      .style('max-width', '320px')
+      .style('white-space', 'normal') // Allow text wrapping
+      .style('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)')
+      .style('border', '1px solid rgba(255, 255, 255, 0.1)');
   }
 
   setupSimulation() {
@@ -248,31 +252,56 @@ class PowerMapVisualization {
     this.nodes
       .call(this.getDragHandler())
       .on('mouseover', (event, d) => {
-        if (this.tooltipTimeout) {
-          clearTimeout(this.tooltipTimeout);
-        }
         // Ensure we have the full node object
-        const nodeData = typeof d === 'object' ? d : this.filteredData.nodes.find(n => n.id === String(d));
+        let nodeData = d;
+        if (typeof d !== 'object' || !d.name) {
+          nodeData = this.filteredData.nodes.find(n => n.id === String(d));
+        }
+
+        if (nodeData && nodeData.name) {
+          // Fix position to prevent shaking
+          nodeData.fx = nodeData.x;
+          nodeData.fy = nodeData.y;
+          this.currentTooltipNode = nodeData;
+
+          // Clear any existing timeout
+          if (this.tooltipTimeout) {
+            clearTimeout(this.tooltipTimeout);
+            this.tooltipTimeout = null;
+          }
+
+          // Only show if not already showing for this node
+          if (!this.tooltipVisible || this.currentTooltipNode?.id !== nodeData.id) {
+            this.tooltipTimeout = setTimeout(() => {
+              this.showNodeTooltip(event, nodeData);
+            }, 150); // Slightly longer delay for stability
+          }
+        }
+      })
+      .on('mouseout', (event, d) => {
+        // Clear timeout
+        if (this.tooltipTimeout) {
+          clearTimeout(this.tooltipTimeout);
+          this.tooltipTimeout = null;
+        }
+
+        // Hide immediately
+        this.hideTooltip();
+
+        // Release fixed position
+        let nodeData = d;
+        if (typeof d !== 'object' || !d.name) {
+          nodeData = this.filteredData.nodes.find(n => n.id === String(d));
+        }
+
         if (nodeData) {
-          // Small delay to prevent rapid firing
-          this.tooltipTimeout = setTimeout(() => {
-            this.showNodeTooltip(event, nodeData);
-          }, 100);
+          nodeData.fx = null;
+          nodeData.fy = null;
         }
-      })
-      .on('mouseout', () => {
-        // Clear timeout and hide tooltip
-        if (this.tooltipTimeout) {
-          clearTimeout(this.tooltipTimeout);
-        }
-        this.hideTooltip();
-      })
-      .on('mouseleave', () => {
-        // Clear timeout and hide tooltip
-        if (this.tooltipTimeout) {
-          clearTimeout(this.tooltipTimeout);
-        }
-        this.hideTooltip();
+        this.currentTooltipNode = null;
+
+        // Resume simulation if needed
+        this.simulation.alpha(0.3).restart();
       })
       .on('click', (event, d) => {
         // Ensure we have the full node object
@@ -412,11 +441,10 @@ class PowerMapVisualization {
   showNodeTooltip(event, d) {
     // Handle case where d might be just an ID (number) instead of the full node object
     let nodeData = d;
-    console.log('Showing tooltip for d:', d);
+
     // If d is just a number/string ID, find the actual node object
     if (typeof d === 'number' || typeof d === 'string') {
       nodeData = this.filteredData.nodes.find(node => node.id === String(d));
-      console.log('Showing tooltip for nodeData:', nodeData);
       if (!nodeData) {
         console.warn('Node not found for ID:', d);
         return;
@@ -429,33 +457,67 @@ class PowerMapVisualization {
       return;
     }
 
+    // Set state
+    this.tooltipVisible = true;
+    this.currentTooltipNode = nodeData;
+
     const connections = this.getConnections(nodeData);
     const relationshipDetails = this.getRelationshipDetails(nodeData);
 
-    // Calculate stable position
-    const tooltipWidth = 300; // Approximate tooltip width
-    const tooltipHeight = 200; // Approximate tooltip height
-    const offset = 15;
+    // Get the actual SVG element position for better positioning
+    const svgRect = this.svg.node().getBoundingClientRect();
 
-    let left = event.pageX + offset;
-    let top = event.pageY - tooltipHeight/2;
+    // Calculate node position in screen coordinates
+    let nodeScreenX, nodeScreenY;
 
-    // Keep tooltip on screen
-    if (left + tooltipWidth > window.innerWidth) {
-      left = event.pageX - tooltipWidth - offset;
-    }
-    if (top < 0) {
-      top = 10;
-    }
-    if (top + tooltipHeight > window.innerHeight) {
-      top = window.innerHeight - tooltipHeight - 10;
+    if (nodeData.x && nodeData.y) {
+      // Use the node's actual position if available
+      const transform = this.currentTransform || d3.zoomIdentity;
+      nodeScreenX = svgRect.left + (nodeData.x * transform.k + transform.x);
+      nodeScreenY = svgRect.top + (nodeData.y * transform.k + transform.y);
+    } else {
+      // Fallback to event coordinates
+      nodeScreenX = event.clientX || event.pageX;
+      nodeScreenY = event.clientY || event.pageY;
     }
 
-    this.tooltip.transition()
-      .duration(200)
-      .style('opacity', 0.9);
+    // Calculate stable position with improved logic
+    const tooltipWidth = 320;
+    const tooltipHeight = 250;
+    const offset = 25; // Increased offset to avoid node area
+    const buffer = 15;
 
-    this.tooltip.html(`
+    // Always position tooltip to the right of the node first
+    let left = nodeScreenX + offset;
+    let top = nodeScreenY - tooltipHeight/2;
+
+    // Boundary checking
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // If tooltip goes off right edge, place it to the left
+    if (left + tooltipWidth > viewportWidth - buffer) {
+      left = nodeScreenX - tooltipWidth - offset;
+    }
+
+    // If still off screen on left, center it
+    if (left < buffer) {
+      left = Math.max(buffer, (viewportWidth - tooltipWidth) / 2);
+    }
+
+    // Vertical positioning
+    if (top < buffer) {
+      top = buffer;
+    } else if (top + tooltipHeight > viewportHeight - buffer) {
+      top = viewportHeight - tooltipHeight - buffer;
+    }
+
+    // Show tooltip immediately without transitions
+    this.tooltip
+      .style('opacity', 0.95)
+      .style('left', left + 'px')
+      .style('top', top + 'px')
+      .html(`
 <div class="tooltip-content">
 <h4>${nodeData.name}</h4>
 <p><strong>Type:</strong> ${nodeData.type}</p>
@@ -464,9 +526,7 @@ class PowerMapVisualization {
 <p><strong>Connections:</strong> ${connections.length}</p>
 ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' + relationshipDetails.map(r => `<li>${r}</li>`).join('') + '</ul>' : ''}
 </div>
-`)
-      .style('left', left + 'px')
-      .style('top', top + 'px');
+`);
   }
   showLinkTooltip(event, d) {
     const sourceNode = this.filteredData.nodes.find(n => n.id === d.source);
@@ -492,11 +552,15 @@ ${relationshipDetails.length > 0 ? '<p><strong>Relationships:</strong></p><ul>' 
   hideTooltip() {
     if (this.tooltipTimeout) {
       clearTimeout(this.tooltipTimeout);
+      this.tooltipTimeout = null;
     }
 
-    this.tooltip.transition()
-      .duration(150) // Faster hide transition
-      .style('opacity', 0);
+    // Update state
+    this.tooltipVisible = false;
+    this.currentTooltipNode = null;
+
+    // Hide immediately to prevent shaking
+    this.tooltip.style('opacity', 0);
   }
 
   getInfluenceLabel(influence) {
